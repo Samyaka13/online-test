@@ -55,7 +55,7 @@ export default function AdminDocxUpload() {
   }
 
   return (
-    <div className="bg-white p-6 rounded shadow w-[700px]">
+    <div className="bg-white p-6 rounded shadow w-175">
       <h1 className="text-xl font-bold mb-4">
         Admin – Upload Test Questions (DOCX)
       </h1>
@@ -79,7 +79,7 @@ export default function AdminDocxUpload() {
           <h2 className="font-semibold mb-2">
             Preview (first 3 questions)
           </h2>
-          <pre className="text-xs bg-gray-100 p-3 max-h-[250px] overflow-auto">
+          <pre className="text-xs bg-gray-100 p-3 max-h-62.5 overflow-auto">
             {JSON.stringify(preview, null, 2)}
           </pre>
         </>

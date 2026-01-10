@@ -22,7 +22,7 @@ export default function AdminSubmissions() {
   if (loading) return <p>Loading submissions...</p>
 
   return (
-    <div className="bg-white p-6 rounded shadow w-[800px] max-h-[80vh] overflow-auto">
+    <div className="bg-white p-6 rounded shadow w-200 max-h-[80vh] overflow-auto">
       <h1 className="text-xl font-bold mb-4">
         Admin – Student Submissions
       </h1>

@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
 import { getQuestions, saveSubmission } from "../services/firebaseService"
 import { registerUser, loginUser } from "../services/authService"
-
+import { getTestStatus } from "../services/firebaseService"
+import { hasUserAlreadyAttempted } from "../services/firebaseService"
 export default function TestPage() {
   /* =========================
      Auth State
@@ -12,7 +13,7 @@ export default function TestPage() {
   const [user, setUser] = useState(null)
   const [isLogin, setIsLogin] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
-
+  const [alreadyAttempted, setAlreadyAttempted] = useState(false)
   /* =========================
      Test State
   ========================== */
@@ -33,37 +34,65 @@ export default function TestPage() {
      Auth Handler
   ========================== */
   const handleAuth = async () => {
-    if (!email || !password || (!isLogin && !name)) {
-      alert("Please fill all required fields")
+  if (!email || !password || !name) {
+    alert("Please fill all required fields")
+    return
+  }
+
+  try {
+    setAuthLoading(true)
+
+    const firebaseUser = isLogin
+      ? await loginUser(email, password)
+      : await registerUser(email, password)
+
+    // 🔍 CHECK IF ALREADY ATTEMPTED
+    const attempted = await hasUserAlreadyAttempted(
+      email,
+      "dice-assessment-v1"
+    )
+
+    if (attempted) {
+      setAlreadyAttempted(true)
       return
     }
 
-    try {
-      setAuthLoading(true)
-      const firebaseUser = isLogin
-        ? await loginUser(email, password)
-        : await registerUser(email, password)
-
-      setUser(firebaseUser)
-    } catch (err) {
-      console.error(err)
-      alert(err.message)
-    } finally {
-      setAuthLoading(false)
-    }
+    setUser(firebaseUser)
+  } catch (err) {
+    console.error(err)
+    alert(err.message)
+  } finally {
+    setAuthLoading(false)
   }
+}
 
   /* =========================
      Fetch Questions
   ========================== */
+
+
   useEffect(() => {
-    async function load() {
-      const data = await getQuestions()
-      setQuestions(data)
-      setLoading(false)
+    if (!user) return   // 🔑 THIS FIXES EVERYTHING
+
+    let interval
+
+    async function checkStatus() {
+      const status = await getTestStatus()
+
+      if (status === "ready") {
+        clearInterval(interval)
+        const data = await getQuestions()
+        setQuestions(data)
+        setLoading(false)
+      }
     }
-    load()
-  }, [])
+
+    setLoading(true)
+    checkStatus()
+    interval = setInterval(checkStatus, 3000)
+
+    return () => clearInterval(interval)
+  }, [user])
 
   /* =========================
      Submit Handler
@@ -121,9 +150,22 @@ export default function TestPage() {
   /* =========================
      Submitted Screen
   ========================== */
+  if (alreadyAttempted) {
+    return (
+      <div className="bg-white p-6 rounded shadow text-center w-100">
+        <h1 className="text-xl font-bold mb-4 text-red-600">
+          Test Already Attempted
+        </h1>
+        <p className="text-gray-700">
+          Our records show that you have already submitted this test.
+          Multiple attempts are not allowed.
+        </p>
+      </div>
+    )
+  }
   if (showSubmittedScreen) {
     return (
-      <div className="bg-white p-8 rounded shadow text-center w-[500px]">
+      <div className="bg-white p-8 rounded shadow text-center w-125">
         <h1 className="text-2xl font-bold mb-4">
           Test Submitted ✅
         </h1>
@@ -146,7 +188,7 @@ export default function TestPage() {
   ========================== */
   if (!user) {
     return (
-      <div className="bg-white p-6 rounded shadow w-[400px] text-center">
+      <div className="bg-white p-6 rounded shadow w-100 text-center">
         <h1 className="text-xl font-bold mb-4">
           {isLogin ? "Login to Test" : "Register for Test"}
         </h1>
@@ -185,8 +227,8 @@ export default function TestPage() {
           {authLoading
             ? "Please wait..."
             : isLogin
-            ? "Login"
-            : "Register & Start Test"}
+              ? "Login"
+              : "Register & Start Test"}
         </button>
 
         <p
@@ -218,21 +260,24 @@ export default function TestPage() {
   }
 
   const currentQuestion = questions[currentIndex]
+  const questionNumber = currentIndex + 1
 
   /* =========================
      Answer Handlers
   ========================== */
   const handleMCQChange = (value) => {
+    const questionNumber = currentIndex + 1
     setAnswers({
       ...answers,
-      [currentQuestion.id]: value,
+      [questionNumber]: value,
     })
   }
 
   const handleLongChange = (e) => {
+    const questionNumber = currentIndex + 1
     setAnswers({
       ...answers,
-      [currentQuestion.id]: e.target.value,
+      [questionNumber]: e.target.value,
     })
   }
 
@@ -240,7 +285,7 @@ export default function TestPage() {
      Test UI
   ========================== */
   return (
-    <div className="bg-white p-6 rounded shadow w-[700px]">
+    <div className="bg-white p-6 rounded shadow w-175">
       <p className="text-sm text-red-600 mb-2">
         Tab switches remaining:{" "}
         {Math.max(0, MAX_TAB_SWITCHES - tabSwitchCount)}
@@ -260,7 +305,8 @@ export default function TestPage() {
             <label key={i} className="block mb-2">
               <input
                 type="radio"
-                checked={answers[currentQuestion.id] === opt}
+                name={`mcq-${questionNumber}`}
+                checked={answers[questionNumber] === opt}
                 onChange={() => handleMCQChange(opt)}
                 className="mr-2"
               />
@@ -274,7 +320,7 @@ export default function TestPage() {
         <textarea
           rows={6}
           className="w-full border p-2"
-          value={answers[currentQuestion.id] || ""}
+          value={answers[questionNumber] || ""}
           onChange={handleLongChange}
           placeholder="Type your answer here..."
         />
