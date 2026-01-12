@@ -285,7 +285,34 @@ export default function TestPage() {
      Test UI
   ========================== */
   return (
+    
     <div className="bg-white p-6 rounded shadow w-175">
+      <div className="w-50 border-r pr-4">
+  <h3 className="font-semibold mb-3">Questions</h3>
+
+  <div className="grid grid-cols-5 gap-2">
+    {questions.map((_, idx) => {
+      const qNo = idx + 1
+      const isAnswered = answers[qNo] !== undefined
+      const isCurrent = currentIndex === idx
+
+      return (
+        <button
+          key={qNo}
+          onClick={() => setCurrentIndex(idx)}
+          className={`
+            w-8 h-8 text-sm rounded
+            ${isCurrent ? "bg-blue-600 text-white" : ""}
+            ${!isCurrent && isAnswered ? "bg-green-500 text-white" : ""}
+            ${!isCurrent && !isAnswered ? "bg-gray-200" : ""}
+          `}
+        >
+          {qNo}
+        </button>
+      )
+    })}
+  </div>
+</div>
       <p className="text-sm text-red-600 mb-2">
         Tab switches remaining:{" "}
         {Math.max(0, MAX_TAB_SWITCHES - tabSwitchCount)}
