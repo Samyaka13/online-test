@@ -43,7 +43,7 @@ export default function AdminCSVUpload() {
     }
 
     return (
-        <div className="bg-white p-4 rounded shadow">
+        <div className="bg-white  p-4 rounded cursor-pointer shadow hover:shadow-lg transition-shadow duration-300">
             <h2 className="font-bold mb-2">Upload Question CSV</h2>
             <input
                 type="file"

@@ -35,13 +35,13 @@ export default function AdminPage() {
                         </svg>
                         Add Questions
                     </h2>
-                    
+
                     <div className="flex gap-4">
-                        <label 
+                        <label
                             className={`
                                 flex-1 flex items-center justify-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200
-                                ${mode === "csv" 
-                                    ? "border-indigo-600 bg-indigo-50" 
+                                ${mode === "csv"
+                                    ? "border-indigo-600 bg-indigo-50"
                                     : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
                                 }
                             `}
@@ -62,11 +62,11 @@ export default function AdminPage() {
                             </div>
                         </label>
 
-                        <label 
+                        <label
                             className={`
                                 flex-1 flex items-center justify-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all duration-200
-                                ${mode === "manual" 
-                                    ? "border-indigo-600 bg-indigo-50" 
+                                ${mode === "manual"
+                                    ? "border-indigo-600 bg-indigo-50"
                                     : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
                                 }
                             `}
