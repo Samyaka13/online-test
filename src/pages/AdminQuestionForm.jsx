@@ -155,7 +155,7 @@ export default function AdminQuestionForm() {
       {/* Add Question Button */}
       <button
         onClick={handleAddQuestion}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="w-full flex items-center justify-center gap-2 bg-linear-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -180,10 +180,10 @@ export default function AdminQuestionForm() {
 
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {questions.map((q, idx) => (
-              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-gradient-to-br from-white to-gray-50">
+              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-linear-to-br from-white to-gray-50">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                    <div className="shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
                       {idx + 1}
                     </div>
                     <div className="flex-1">
@@ -201,7 +201,7 @@ export default function AdminQuestionForm() {
                   </div>
                   <button
                     onClick={() => handleRemoveQuestion(q.id)}
-                    className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    className="shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                     title="Remove question"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,9 +230,9 @@ export default function AdminQuestionForm() {
 
       {/* Publish Button */}
       {questions.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
+        <div className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+            <div className="shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
               </svg>
@@ -249,7 +249,7 @@ export default function AdminQuestionForm() {
               <button
                 onClick={handlePublish}
                 disabled={saving}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>

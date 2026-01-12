@@ -7,7 +7,7 @@ export default function AdminPage() {
     const [mode, setMode] = useState("csv") // "csv" | "manual"
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+        <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-600">
@@ -101,7 +101,7 @@ export default function AdminPage() {
                         <div className="w-full border-t border-gray-300"></div>
                     </div>
                     <div className="relative flex justify-center">
-                        <span className="bg-gradient-to-br from-slate-50 to-slate-100 px-4 text-sm text-gray-500 font-medium">
+                        <span className="bg-linear-to-br from-slate-50 to-slate-100 px-4 text-sm text-gray-500 font-medium">
                             Reports & Analytics
                         </span>
                     </div>
