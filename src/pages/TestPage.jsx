@@ -5,9 +5,7 @@ import { getTestStatus } from "../services/firebaseService"
 import { hasUserAlreadyAttempted } from "../services/firebaseService"
 
 export default function TestPage() {
-  /* =========================
-     Auth State
-  ========================== */
+ 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -15,9 +13,7 @@ export default function TestPage() {
   const [isLogin, setIsLogin] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [alreadyAttempted, setAlreadyAttempted] = useState(false)
-  /* =========================
-     Test State
-  ========================== */
+  
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)

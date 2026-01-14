@@ -84,7 +84,6 @@ export default function AdminReportPage() {
                 </div>
             </div>
 
-            {/* Info Card */}
             
         </div>
     )
