@@ -1,7 +1,12 @@
 import { useState } from "react"
-import { clearQuestions, saveQuestions, setTestStatus } from "../services/firebaseService"
+import { createTest } from "../services/firebaseService"
 
-export default function AdminQuestionForm() {
+export default function AdminQuestionForm({ onSuccess }) {
+  // New State for Test Metadata
+  const [testTitle, setTestTitle] = useState("")
+  const [testId, setTestId] = useState("")
+
+  // Existing State
   const [type, setType] = useState("mcq")
   const [questionText, setQuestionText] = useState("")
   const [options, setOptions] = useState(["", "", "", ""])
@@ -47,6 +52,13 @@ export default function AdminQuestionForm() {
      Publish Question Paper
   ========================== */
   const handlePublish = async () => {
+    // 1. Validate Metadata
+    if (!testTitle.trim() || !testId.trim()) {
+      alert("Please provide a Test Title and a Unique Test ID.")
+      return
+    }
+
+    // 2. Validate Questions
     if (questions.length === 0) {
       alert("Add at least one question before publishing")
       return
@@ -55,21 +67,20 @@ export default function AdminQuestionForm() {
     try {
       setSaving(true)
 
-      // 🔒 lock test
-      await setTestStatus("uploading")
+      // 3. Create the Test Document
+      await createTest(testId, testTitle, questions)
 
-      // 🔥 replace paper
-      await clearQuestions()
-      await saveQuestions(questions)
-
-      // ✅ unlock test
-      await setTestStatus("ready")
-
-      alert("Question paper published successfully")
+      alert("Test published successfully!")
+      
+      // 4. Reset and Navigate Back
       setQuestions([])
+      setTestTitle("")
+      setTestId("")
+      if (onSuccess) onSuccess()
+
     } catch (err) {
       console.error(err)
-      alert("Failed to publish question paper")
+      alert(err.message) // Displays "Test ID already exists" error
     } finally {
       setSaving(false)
     }
@@ -77,6 +88,40 @@ export default function AdminQuestionForm() {
 
   return (
     <div className="space-y-6">
+      
+      {/* NEW: Test Metadata Section */}
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 grid md:grid-cols-2 gap-6">
+        <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+                Test Title <span className="text-red-500">*</span>
+            </label>
+            <input
+                type="text"
+                value={testTitle}
+                onChange={(e) => setTestTitle(e.target.value)}
+                placeholder="e.g. ReactJS Final Assessment"
+                className="w-full border-2 border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
+        </div>
+        <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+                Unique Test ID <span className="text-red-500">*</span>
+            </label>
+            <input
+                type="text"
+                value={testId}
+                onChange={(e) => setTestId(e.target.value.replace(/\s+/g, '-').toLowerCase())}
+                placeholder="e.g. react-final-2024"
+                className="w-full border-2 border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-mono text-sm"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+                Students will enter this ID to access the exam.
+            </p>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-200 my-4"></div>
+
       {/* Form Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -85,8 +130,8 @@ export default function AdminQuestionForm() {
           </svg>
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Create Questions</h2>
-          <p className="text-sm text-gray-600">Add questions one by one to build your test</p>
+          <h2 className="text-lg font-bold text-gray-800">Add Questions</h2>
+          <p className="text-sm text-gray-600">Build your question paper one by one</p>
         </div>
       </div>
 
@@ -155,7 +200,7 @@ export default function AdminQuestionForm() {
       {/* Add Question Button */}
       <button
         onClick={handleAddQuestion}
-        className="w-full flex items-center justify-center gap-2 bg-linear-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -180,7 +225,7 @@ export default function AdminQuestionForm() {
 
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {questions.map((q, idx) => (
-              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-linear-to-br from-white to-gray-50">
+              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-gradient-to-br from-white to-gray-50">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
@@ -230,7 +275,7 @@ export default function AdminQuestionForm() {
 
       {/* Publish Button */}
       {questions.length > 0 && (
-        <div className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,25 +288,26 @@ export default function AdminQuestionForm() {
                 Ready to Publish?
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Publishing will make this question paper live for all students. Any existing questions will be replaced.
+                Publishing will create a new test with ID <strong>{testId || "..."}</strong>. 
+                Students will need this ID to attempt the test.
               </p>
               
               <button
                 onClick={handlePublish}
                 disabled={saving}
-                className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Publishing...</span>
+                    <span>Creating Test...</span>
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span>Publish Question Paper</span>
+                    <span>Publish Test</span>
                   </>
                 )}
               </button>
