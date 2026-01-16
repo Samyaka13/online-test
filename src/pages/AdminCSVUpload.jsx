@@ -44,16 +44,16 @@ export default function AdminCSVUpload({ onSuccess }) {
 
                     // 3. Convert CSV data to Question Objects
                     const questions = parseCSVQuestions(results.data)
-                    
+
                     if (questions.length === 0) {
                         throw new Error("No valid questions found in CSV")
                     }
 
                     // 4. Create Test in Firebase
                     await createTest(testId, testTitle, questions)
-                    
+
                     alert(`Success! Created test "${testTitle}" with ${questions.length} questions.`)
-                    
+
                     // 5. Reset and Redirect
                     setTestTitle("")
                     setTestId("")
@@ -77,7 +77,7 @@ export default function AdminCSVUpload({ onSuccess }) {
 
     return (
         <div className="space-y-6 max-w-3xl mx-auto">
-             <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -126,8 +126,8 @@ export default function AdminCSVUpload({ onSuccess }) {
                     onChange={handleFileChange}
                     className="hidden"
                 />
-                <label 
-                    htmlFor="csvInput" 
+                <label
+                    htmlFor="csvInput"
                     className="cursor-pointer flex flex-col items-center gap-2"
                 >
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,9 +165,20 @@ export default function AdminCSVUpload({ onSuccess }) {
 
             {/* CSV Format Guide */}
             <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100">
-                <p className="font-bold mb-1">CSV Format Required:</p>
-                <p>Headers: <code>type, questionText, optionA, optionB, optionC, optionD, answer</code></p>
-                <p className="mt-1 opacity-75">Note: 'type' should be 'mcq' or 'long'. For 'long', options are ignored.</p>
+                <p className="font-bold mb-2">CSV Format Required:</p>
+                <div className="font-mono bg-blue-100 p-2 rounded mb-2 text-xs break-all">
+                    question, type, option_a, option_b, option_c, option_d, answer
+                </div>
+                <ul className="list-disc list-inside space-y-1 opacity-90">
+                    <li><strong>type:</strong> Use 'mcq' or 'long'</li>
+                    <li><strong>options:</strong> Leave empty for 'long' type</li>
+                    <li><strong>answer:</strong>
+                        <ul className="pl-6 list-[circle]">
+                            <li>For MCQ: Enter the correct option text (e.g. "React")</li>
+                            <li>For Long: Enter the <strong>Reference Answer</strong> for AI grading</li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     )

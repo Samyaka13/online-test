@@ -1,11 +1,9 @@
-// src/utils/parseCSVQuestions.js
-
 export function parseCSVQuestions(rows) {
   return rows.map((row, index) => {
     // 1. Extract basic fields
     const type = row.type?.trim().toLowerCase()
     const question = row.question?.trim()
-    const answer = row.answer?.trim() // Capture the answer
+    const answer = row.answer?.trim()
 
     // 2. Basic Validation
     if (!type || !question) {
@@ -32,31 +30,30 @@ export function parseCSVQuestions(rows) {
         )
       }
 
-      // Check if answer is provided for MCQs
       if (!answer) {
         throw new Error(`MCQ at line ${index + 2} is missing the 'answer' field`)
       }
-
-      // Optional: strict check to ensure the answer matches one of the options exactly
-      // if (!options.includes(answer)) {
-      //   throw new Error(`Answer at line ${index + 2} does not match any provided options`)
-      // }
 
       return {
         type: "mcq",
         questionText: question,
         options,
-        correctAnswer: answer, // Storing the correct answer
+        correctAnswer: answer,
       }
     }
 
-    // 5. Handle Long Answer Type
+    // 5. Handle Long Answer Type (UPDATED)
     if (type === "long") {
+      // For AI grading, the 'answer' column serves as the Reference Answer
+      if (!answer) {
+         throw new Error(`Long Answer at line ${index + 2} is missing the 'answer' (reference) field`)
+      }
+
       return {
         type: "long",
         questionText: question,
         options: [],
-        correctAnswer: answer || "", // Long answers might not have a strict key, but we save it if present
+        referenceAnswer: answer, // <--- Key change: Save as referenceAnswer
       }
     }
 

@@ -1,301 +1,218 @@
 import { useEffect, useState } from "react"
 import { getAllTests, getAllSubmissions } from "../services/firebaseService"
-import { generateTestReport } from "../utils/generateTestReport"
+import { generateTestReport } from "../utils/generateTestReport" // Response CSV
+import { generateMarksReport } from "../utils/generateMarksReport" // Marks CSV
 import { downloadCSV } from "../utils/downloadCSV"
 
 export default function AdminReportPage() {
-    const [stats, setStats] = useState({
-        totalTests: 0,
-        totalQuestions: 0,
-        totalSubmissions: 0,
-        activeTests: 0
-    })
-    const [testPerformance, setTestPerformance] = useState([])
-    const [recentSubmissions, setRecentSubmissions] = useState([])
+    const [allTests, setAllTests] = useState([])
+    const [allSubmissions, setAllSubmissions] = useState([])
     const [loading, setLoading] = useState(true)
-    const [downloadingId, setDownloadingId] = useState(null)
+
+    const [selectedTest, setSelectedTest] = useState(null) // null = Show Test List, Object = Show Student List
 
     useEffect(() => {
-        fetchReportData()
+        fetchData()
     }, [])
 
-    const fetchReportData = async () => {
+    const fetchData = async () => {
         try {
             const [tests, submissions] = await Promise.all([
                 getAllTests(),
                 getAllSubmissions()
             ])
-
-            // 1. Calculate Global Stats
-            const totalQuestions = tests.reduce((acc, t) => acc + (t.questions?.length || 0), 0)
-            const activeTests = tests.filter(t => t.status === 'active').length
-
-            setStats({
-                totalTests: tests.length,
-                totalQuestions,
-                totalSubmissions: submissions.length,
-                activeTests
-            })
-
-            // 2. Calculate Performance Per Test
-            const performanceData = tests.map(test => {
-                const testSubs = submissions.filter(s => s.testId === test.id)
-                const stats = calculateTestStats(test, testSubs)
-
-                return {
-                    ...test,
-                    submissionsCount: testSubs.length,
-                    questionCount: test.questions?.length || 0,
-                    avgScore: stats.avgScore,
-                }
-            })
-            setTestPerformance(performanceData)
-
-            // 3. Recent Submissions (Enriched with Score)
-            // Create a lookup map for tests to easily find the questions for a submission
-            const testsMap = tests.reduce((acc, t) => {
-                acc[t.id] = t
-                return acc
-            }, {})
-
-            const enrichedSubmissions = submissions
-                .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
-                .slice(0, 10)
-                .map(sub => {
-                    const test = testsMap[sub.testId]
-                    const scoreData = calculateSubmissionScore(sub, test)
-                    return { ...sub, scoreData }
-                })
-
-            setRecentSubmissions(enrichedSubmissions)
-
+            setAllTests(tests)
+            setAllSubmissions(submissions)
         } catch (err) {
-            console.error("Failed to load report data", err)
+            console.error(err)
         } finally {
             setLoading(false)
         }
     }
 
-    // --- Helper 1: Calculate Average for a Test ---
-    const calculateTestStats = (test, submissions) => {
-        if (!submissions.length || !test.questions) return { avgScore: "N/A" }
-
-        const scorableQuestions = test.questions
-            .map((q, index) => ({ ...q, index: index + 1 }))
-            .filter(q => q.type === 'mcq' && q.correctAnswer)
-
-        if (scorableQuestions.length === 0) return { avgScore: "N/A" }
-
-        let totalPercentage = 0
-
-        submissions.forEach(sub => {
-            let correctCount = 0
-            scorableQuestions.forEach(q => {
-                const userAns = sub.responses?.[q.index]
-                if (userAns && userAns.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
-                    correctCount++
-                }
-            })
-            const subPercentage = (correctCount / scorableQuestions.length) * 100
-            totalPercentage += subPercentage
-        })
-
-        const avg = totalPercentage / submissions.length
-        return { avgScore: `${avg.toFixed(1)}%` }
+    // --- Helpers ---
+    const getSubmissionsForTest = (testId) => {
+        return allSubmissions.filter(s => s.testId === testId)
     }
 
-    // --- Helper 2: Calculate Score for a Single Submission ---
-    const calculateSubmissionScore = (sub, test) => {
-        if (!test || !test.questions) return null
+    const calculateAvgScore = (testId) => {
+        const subs = getSubmissionsForTest(testId)
+        if (!subs.length) return "N/A"
 
-        let correct = 0
-        let total = 0
-
-        test.questions.forEach((q, idx) => {
-            if (q.type === 'mcq' && q.correctAnswer) {
-                total++
-                const userAns = sub.responses?.[idx + 1]
-                if (userAns && userAns.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
-                    correct++
-                }
+        let totalPercent = 0
+        let count = 0
+        subs.forEach(s => {
+            if (s.calculatedScore && s.calculatedScore.total > 0) {
+                totalPercent += (s.calculatedScore.correct / s.calculatedScore.total) * 100
+                count++
             }
         })
+        return count === 0 ? "N/A" : `${(totalPercent / count).toFixed(1)}%`
+    }
 
-        if (total === 0) return null
-        
-        return {
-            correct,
-            total,
-            percentage: Math.round((correct / total) * 100)
+    // --- Download Actions ---
+    const handleDownloadResponses = (submission) => {
+        const data = generateTestReport(selectedTest.title, selectedTest.questions, [submission])
+        downloadCSV(data, `${submission.name}-responses.csv`)
+    }
+
+    const handleDownloadMarks = (submission) => {
+        const data = generateMarksReport(selectedTest.title, selectedTest.questions, [submission])
+        downloadCSV(data, `${submission.name}-marks.csv`)
+    }
+
+    // --- NEW: Bulk Download for Current View ---
+    const handleBulkDownload = (type) => {
+        const subs = getSubmissionsForTest(selectedTest.id)
+        if (type === 'responses') {
+            const data = generateTestReport(selectedTest.title, selectedTest.questions, subs)
+            downloadCSV(data, `${selectedTest.id}-all-responses.csv`)
+        } else {
+            const data = generateMarksReport(selectedTest.title, selectedTest.questions, subs)
+            downloadCSV(data, `${selectedTest.id}-all-marks.csv`)
         }
     }
 
-    const handleDownloadReport = async (test) => {
-        if (test.submissionsCount === 0) {
-            alert("No submissions to download for this test.")
-            return
-        }
-        try {
-            setDownloadingId(test.id)
-            const allSubs = await getAllSubmissions()
-            const testSubs = allSubs.filter(s => s.testId === test.id)
-            const reportData = generateTestReport(test.title, test.questions || [], testSubs)
-            downloadCSV(reportData, `${test.id}-report-${new Date().toISOString().slice(0,10)}.csv`)
-        } catch (err) {
-            console.error(err)
-            alert("Failed to generate CSV")
-        } finally {
-            setDownloadingId(null)
-        }
-    }
+    if (loading) return <div className="p-8 text-center text-gray-500">Loading Data...</div>
 
-    if (loading) {
+    // ==========================================
+    // VIEW 2: STUDENT LIST (Detailed View)
+    // ==========================================
+    if (selectedTest) {
+        const submissions = getSubmissionsForTest(selectedTest.id)
+
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                <span className="ml-3 text-gray-500 font-medium">Loading Analytics...</span>
+            <div className="space-y-6">
+                {/* Back Button & Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setSelectedTest(null)}
+                            className="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors"
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        </button>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-800">{selectedTest.title}</h2>
+                            <p className="text-sm text-gray-500">Showing {submissions.length} submissions</p>
+                        </div>
+                    </div>
+                    
+                    {/* Bulk Actions */}
+                    <div className="flex gap-2">
+                         <button onClick={() => handleBulkDownload('responses')} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded text-sm font-medium hover:bg-indigo-100">
+                            Download All Responses
+                         </button>
+                         <button onClick={() => handleBulkDownload('marks')} className="bg-green-50 text-green-700 px-4 py-2 rounded text-sm font-medium hover:bg-green-100">
+                            Download All Marks
+                         </button>
+                    </div>
+                </div>
+
+                {/* Students Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                            <tr>
+                                <th className="p-4">Student Name</th>
+                                <th className="p-4">Email ID</th>
+                                <th className="p-4 text-center">Total Score</th>
+                                <th className="p-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {submissions.map((sub) => (
+                                <tr key={sub.id} className="hover:bg-gray-50">
+                                    <td className="p-4 font-medium text-gray-800">{sub.name}</td>
+                                    <td className="p-4 text-gray-600">{sub.email}</td>
+                                    <td className="p-4 text-center">
+                                        {sub.calculatedScore ? (
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                (sub.calculatedScore.correct / sub.calculatedScore.total) >= 0.5 
+                                                ? 'bg-green-100 text-green-700' 
+                                                : 'bg-red-100 text-red-700'
+                                            }`}>
+                                                {sub.calculatedScore.correct} / {sub.calculatedScore.total}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm">--</span>
+                                        )}
+                                    </td>
+                                    <td className="p-4 text-right space-x-2">
+                                        <button 
+                                            onClick={() => handleDownloadResponses(sub)}
+                                            className="text-xs border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-50 transition"
+                                        >
+                                            Responses CSV
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDownloadMarks(sub)}
+                                            className="text-xs border border-green-200 text-green-700 px-3 py-1.5 rounded hover:bg-green-50 transition"
+                                        >
+                                            Marks CSV
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {submissions.length === 0 && (
+                                <tr>
+                                    <td colSpan="4" className="p-8 text-center text-gray-400">No submissions found.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         )
     }
 
+    // ==========================================
+    // VIEW 1: TEST LIST (Main Dashboard)
+    // ==========================================
     return (
         <div className="space-y-8">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
                 <div>
                     <h2 className="text-xl font-bold text-gray-800">Analytics & Reports</h2>
-                    <p className="text-sm text-gray-600">Download reports for specific tests</p>
+                    <p className="text-sm text-gray-600">Select a test to view student performance</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <p className="text-sm text-gray-500 font-medium">Total Submissions</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.totalSubmissions}</p>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <p className="text-sm text-gray-500 font-medium">Active Tests</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.activeTests}</p>
-                </div>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-                {/* Left Column: Test Performance Table */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="font-bold text-gray-800">Test Reports</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                <tr>
-                                    <th className="p-4">Test Title</th>
-                                    <th className="p-4 text-center">Avg Score</th>
-                                    <th className="p-4 text-center">Submissions</th>
-                                    <th className="p-4 text-center">Status</th>
-                                    <th className="p-4 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {testPerformance.map((test) => (
-                                    <tr key={test.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="p-4">
-                                            <p className="font-medium text-gray-900">{test.title}</p>
-                                            <p className="text-xs text-gray-500 font-mono">{test.id}</p>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                                test.avgScore === 'N/A' ? 'bg-gray-100 text-gray-500' : 'bg-indigo-100 text-indigo-700'
-                                            }`}>
-                                                {test.avgScore}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
-                                                {test.submissionsCount}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                test.status === 'active' 
-                                                ? 'bg-green-100 text-green-700' 
-                                                : 'bg-red-100 text-red-700'
-                                            }`}>
-                                                {test.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-right">
-                                            <button 
-                                                onClick={() => handleDownloadReport(test)}
-                                                disabled={downloadingId === test.id || test.submissionsCount === 0}
-                                                className="text-sm border border-gray-300 hover:bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {downloadingId === test.id ? (
-                                                    <div className="w-3 h-3 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-                                                ) : (
-                                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                )}
-                                                CSV
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {testPerformance.length === 0 && (
-                                    <tr>
-                                        <td colSpan="5" className="p-8 text-center text-gray-500">
-                                            No tests found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* Right Column: Recent Activity (Enriched with Scores) */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100">
-                        <h3 className="font-bold text-gray-800">Recent Activity</h3>
-                    </div>
-                    <div className="divide-y divide-gray-100 max-h-100 overflow-y-auto">
-                        {recentSubmissions.map((sub) => (
-                            <div key={sub.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                <div className="flex justify-between items-start mb-1">
-                                    <p className="font-semibold text-gray-800 text-sm">{sub.name || "Student"}</p>
-                                    <span className="text-xs text-gray-400">
-                                        {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : ""}
-                                    </span>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allTests.map(test => {
+                    const submissionCount = getSubmissionsForTest(test.id).length
+                    return (
+                        <div 
+                            key={test.id} 
+                            onClick={() => setSelectedTest(test)}
+                            className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover:border-indigo-300 transition-all group"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 className="font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">{test.title}</h3>
+                                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded font-mono">{test.id}</span>
                                 </div>
-                                <div className="text-xs text-gray-500 truncate mb-2" title={sub.email}>
-                                    {sub.email}
-                                </div>
-                                
-                                <div className="flex justify-between items-center">
-                                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-mono">
-                                        {sub.testId}
-                                    </span>
-
-                                    {/* Score Display */}
-                                    {sub.scoreData ? (
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                                            sub.scoreData.percentage >= 50 
-                                            ? 'bg-green-100 text-green-700' 
-                                            : 'bg-red-50 text-red-600'
-                                        }`}>
-                                            {sub.scoreData.correct}/{sub.scoreData.total} ({sub.scoreData.percentage}%)
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-gray-400 italic">No Score</span>
-                                    )}
+                                <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 group-hover:bg-indigo-100 group-hover:scale-110 transition-all">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Submissions</p>
+                                    <p className="text-lg font-bold text-gray-800">{submissionCount}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Avg Score</p>
+                                    <p className="text-lg font-bold text-green-600">{calculateAvgScore(test.id)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )
