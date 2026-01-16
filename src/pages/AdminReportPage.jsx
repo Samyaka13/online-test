@@ -10,7 +10,7 @@ export default function AdminReportPage() {
     const [loading, setLoading] = useState(true)
 
     const [selectedTest, setSelectedTest] = useState(null) // null = Show Test List, Object = Show Student List
-
+    console.log(selectedTest)
     useEffect(() => {
         fetchData()
     }, [])
@@ -53,6 +53,7 @@ export default function AdminReportPage() {
     // --- Download Actions ---
     const handleDownloadResponses = (submission) => {
         const data = generateTestReport(selectedTest.title, selectedTest.questions, [submission])
+        console.log("Data",data)
         downloadCSV(data, `${submission.name}-responses.csv`)
     }
 
@@ -80,6 +81,7 @@ export default function AdminReportPage() {
     // ==========================================
     if (selectedTest) {
         const submissions = getSubmissionsForTest(selectedTest.id)
+        console.log("submissions",submissions) 
 
         return (
             <div className="space-y-6">

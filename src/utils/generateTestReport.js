@@ -4,16 +4,16 @@ export function generateTestReport(testTitle, questions, submissions) {
   if (!submissions || submissions.length === 0) {
     return [];
   }
-
+  console.log("submissions: ",submissions)
   return submissions.map((sub) => {
     // 1. Calculate/Retrieve Score
     let correctCount = 0;
     let totalScorable = 0;
-
     if (sub.calculatedScore) {
         correctCount = sub.calculatedScore.correct; // Uses the 5.9
         totalScorable = sub.calculatedScore.total;
-    } else {
+    }
+     else {
         // Fallback logic for old tests
         questions.forEach((q, index) => {
             if (q.type === 'mcq' && q.correctAnswer) {

@@ -102,6 +102,8 @@ export async function saveSubmission({
   name,
   email,
   responses,
+  calculatedScore,   
+  detailedAnalysis
 }) {
   const ref = collection(db, "submissions");
 
@@ -111,6 +113,8 @@ export async function saveSubmission({
     name,
     email,
     responses,
+    calculatedScore: calculatedScore || null,   
+    detailedAnalysis: detailedAnalysis || null,
     submittedAt: new Date().toISOString(),
   });
 }
