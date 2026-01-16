@@ -10,6 +10,9 @@ export default function AdminQuestionForm({ onSuccess }) {
   const [type, setType] = useState("mcq")
   const [questionText, setQuestionText] = useState("")
   const [options, setOptions] = useState(["", "", "", ""])
+  // NEW: Track the index of the correct option (0-3)
+  const [correctOptionIndex, setCorrectOptionIndex] = useState(null) 
+  
   const [questions, setQuestions] = useState([])
   const [saving, setSaving] = useState(false)
 
@@ -17,27 +20,40 @@ export default function AdminQuestionForm({ onSuccess }) {
      Add Question Locally
   ========================== */
   const handleAddQuestion = () => {
+    // 1. Basic Validation
     if (!questionText.trim()) {
       alert("Question is required")
       return
     }
 
-    if (type === "mcq" && options.some(o => !o.trim())) {
-      alert("All 4 options are required")
-      return
+    // 2. MCQ Specific Validation
+    if (type === "mcq") {
+        if (options.some(o => !o.trim())) {
+            alert("All 4 options are required")
+            return
+        }
+        if (correctOptionIndex === null) {
+            alert("Please select the correct answer option")
+            return
+        }
     }
 
+    // 3. Create Object
     const newQuestion = {
       id: Date.now(),
       type,
       questionText,
       options: type === "mcq" ? options : [],
+      // NEW: Save the text of the correct option for auto-grading
+      correctAnswer: type === "mcq" ? options[correctOptionIndex] : "", 
     }
 
     setQuestions(prev => [...prev, newQuestion])
 
+    // 4. Reset Form
     setQuestionText("")
     setOptions(["", "", "", ""])
+    setCorrectOptionIndex(null) // Reset selection
     setType("mcq")
   }
 
@@ -52,13 +68,11 @@ export default function AdminQuestionForm({ onSuccess }) {
      Publish Question Paper
   ========================== */
   const handlePublish = async () => {
-    // 1. Validate Metadata
     if (!testTitle.trim() || !testId.trim()) {
       alert("Please provide a Test Title and a Unique Test ID.")
       return
     }
 
-    // 2. Validate Questions
     if (questions.length === 0) {
       alert("Add at least one question before publishing")
       return
@@ -66,13 +80,9 @@ export default function AdminQuestionForm({ onSuccess }) {
 
     try {
       setSaving(true)
-
-      // 3. Create the Test Document
       await createTest(testId, testTitle, questions)
-
       alert("Test published successfully!")
       
-      // 4. Reset and Navigate Back
       setQuestions([])
       setTestTitle("")
       setTestId("")
@@ -80,7 +90,7 @@ export default function AdminQuestionForm({ onSuccess }) {
 
     } catch (err) {
       console.error(err)
-      alert(err.message) // Displays "Test ID already exists" error
+      alert(err.message)
     } finally {
       setSaving(false)
     }
@@ -89,7 +99,7 @@ export default function AdminQuestionForm({ onSuccess }) {
   return (
     <div className="space-y-6">
       
-      {/* NEW: Test Metadata Section */}
+      {/* Test Metadata Section */}
       <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 grid md:grid-cols-2 gap-6">
         <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -169,28 +179,43 @@ export default function AdminQuestionForm({ onSuccess }) {
         />
       </div>
 
-      {/* MCQ Options */}
+      {/* MCQ Options with Correct Answer Selector */}
       {type === "mcq" && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Answer Options
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex justify-between">
+            <span>Answer Options</span>
+            <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Select the radio button for the correct answer</span>
           </label>
           <div className="space-y-3">
             {options.map((opt, i) => (
-              <div key={i} className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-semibold text-indigo-600">{String.fromCharCode(65 + i)}</span>
-                </div>
-                <input
-                  placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                  value={opt}
-                  onChange={(e) => {
-                    const copy = [...options]
-                    copy[i] = e.target.value
-                    setOptions(copy)
-                  }}
-                  className="w-full border-2 border-gray-200 rounded-lg p-3 pl-12 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              <div key={i} className={`relative flex items-center gap-3 p-1 rounded-lg border-2 transition-all ${
+                  correctOptionIndex === i ? 'border-green-500 bg-green-50' : 'border-transparent'
+              }`}>
+                {/* Radio Button for Correct Answer */}
+                <input 
+                    type="radio"
+                    name="correctOption"
+                    checked={correctOptionIndex === i}
+                    onChange={() => setCorrectOptionIndex(i)}
+                    className="w-5 h-5 text-green-600 cursor-pointer focus:ring-green-500 ml-2"
+                    title="Mark as correct answer"
                 />
+
+                <div className="relative flex-1">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-semibold text-indigo-600">{String.fromCharCode(65 + i)}</span>
+                    </div>
+                    <input
+                    placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                    value={opt}
+                    onChange={(e) => {
+                        const copy = [...options]
+                        copy[i] = e.target.value
+                        setOptions(copy)
+                    }}
+                    className="w-full border-2 border-gray-200 rounded-lg p-3 pl-12 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    />
+                </div>
               </div>
             ))}
           </div>
@@ -258,9 +283,13 @@ export default function AdminQuestionForm({ onSuccess }) {
                 {q.type === "mcq" && (
                   <div className="ml-11 mt-3 space-y-1">
                     {q.options.map((o, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center text-xs font-semibold">
-                          {String.fromCharCode(65 + i)}
+                      <div key={i} className={`flex items-center gap-2 text-sm ${
+                          q.correctAnswer === o ? "text-green-700 font-bold" : "text-gray-600"
+                      }`}>
+                        <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center text-xs font-semibold ${
+                            q.correctAnswer === o ? "border-green-600 bg-green-100" : "border-gray-300"
+                        }`}>
+                          {q.correctAnswer === o ? "✓" : String.fromCharCode(65 + i)}
                         </div>
                         <span>{o}</span>
                       </div>
@@ -273,7 +302,7 @@ export default function AdminQuestionForm({ onSuccess }) {
         </div>
       )}
 
-      {/* Publish Button */}
+      {/* Publish Button Area - Unchanged */}
       {questions.length > 0 && (
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
