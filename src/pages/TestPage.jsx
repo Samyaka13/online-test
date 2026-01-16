@@ -117,7 +117,7 @@ export default function TestPage() {
            if (userAns.trim() && q.referenceAnswer) {
               try {
                   // Call our local Node.js backend
-                  const response = await fetch("http://localhost:8000/grade", {
+                  const response = await fetch("https://qna-backend-002j.onrender.com/grade", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ 
@@ -128,6 +128,7 @@ export default function TestPage() {
 
                   if (response.ok) {
                       const data = await response.json()
+                      console.log("LLM Responces : ", data)
                       // Add decimal marks (e.g., 0.8)
                       totalScore += data.marks_out_of_1
                       detailedAnalysis[qNum].score = data.marks_out_of_1
