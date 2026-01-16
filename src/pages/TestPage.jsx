@@ -146,7 +146,7 @@ export default function TestPage() {
   ========================== */
   if (alreadyAttempted) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+      <div className="min-h-screen w-full bg-linear-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md w-full border-t-4 border-red-500">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ export default function TestPage() {
 
   if (showSubmittedScreen) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <div className="min-h-screen w-full bg-linear-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
         <div className="bg-white p-10 rounded-xl shadow-2xl text-center max-w-lg w-full border-t-4 border-green-500">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +195,7 @@ export default function TestPage() {
   ========================== */
   if (!user) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen w-full bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full border-t-4 border-indigo-500">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -263,7 +263,7 @@ export default function TestPage() {
           <button
             onClick={handleAuth}
             disabled={authLoading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {authLoading ? "Verifying..." : "Start Test"}
           </button>
@@ -321,7 +321,7 @@ export default function TestPage() {
   const answeredCount = Object.keys(answers).length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border-l-4 border-indigo-600">
@@ -396,7 +396,7 @@ export default function TestPage() {
               </h2>
             </div>
 
-            <div className="mb-8 min-h-[200px]">
+            <div className="mb-8 min-h-50">
               {currentQuestion.type === "mcq" && (
                 <div className="space-y-3">
                   {currentQuestion.options.map((opt, i) => (

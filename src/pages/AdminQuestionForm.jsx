@@ -182,7 +182,7 @@ export default function AdminQuestionForm({ onSuccess }) {
       {/* MCQ Options with Correct Answer Selector */}
       {type === "mcq" && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex justify-between">
+          <label className="text-sm font-medium text-gray-700 mb-2 flex justify-between">
             <span>Answer Options</span>
             <span className="text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Select the radio button for the correct answer</span>
           </label>
@@ -225,7 +225,7 @@ export default function AdminQuestionForm({ onSuccess }) {
       {/* Add Question Button */}
       <button
         onClick={handleAddQuestion}
-        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="w-full flex items-center justify-center gap-2 bg-linear-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -250,7 +250,7 @@ export default function AdminQuestionForm({ onSuccess }) {
 
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {questions.map((q, idx) => (
-              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-gradient-to-br from-white to-gray-50">
+              <div key={q.id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-all bg-linear-to-br from-white to-gray-50">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-sm">
@@ -304,7 +304,7 @@ export default function AdminQuestionForm({ onSuccess }) {
 
       {/* Publish Button Area - Unchanged */}
       {questions.length > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
+        <div className="bg-linear-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
           <div className="flex items-start gap-4">
             <div className="shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,7 +324,7 @@ export default function AdminQuestionForm({ onSuccess }) {
               <button
                 onClick={handlePublish}
                 disabled={saving}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>

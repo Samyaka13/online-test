@@ -261,7 +261,7 @@ export default function AdminReportPage() {
                     <div className="p-6 border-b border-gray-100">
                         <h3 className="font-bold text-gray-800">Recent Activity</h3>
                     </div>
-                    <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+                    <div className="divide-y divide-gray-100 max-h-100 overflow-y-auto">
                         {recentSubmissions.map((sub) => (
                             <div key={sub.id} className="p-4 hover:bg-gray-50 transition-colors">
                                 <div className="flex justify-between items-start mb-1">
