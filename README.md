@@ -1,69 +1,95 @@
+# 🎓 Online Assessment Platform
 
-# 🎓 Online Assessment Platform (Frontend)
+A comprehensive, secure, and AI-enhanced web application for conducting online examinations. The platform features role-based access for **Administrators** (to create tests, manage questions, and view analytics) and **Students** (to take secure, proctored exams).
 
-A modern, secure, and feature-rich React application for conducting online examinations. This platform supports both **Multiple Choice Questions (MCQs)** and **Long Answer Questions** with AI-powered grading integration. It features separate interfaces for Administrators (to manage tests and view results) and Students (to attempt exams with proctoring measures).
+It uniquely integrates **local AI models (via Transformers.js)** to automatically grade long-answer questions based on semantic similarity.
 
 ## 🚀 Features
 
 ### 👨‍🎓 Student Portal
 
-* **Secure Authentication**: Students register or login using their Email and a unique **Test ID** provided by the admin.
-* **AI-Powered Grading**: Long-answer questions are automatically graded against a reference answer using an external AI service, providing similarity scores and feedback.
-* **Proctoring & Security**:
-* **Tab Switch Detection**: Monitors focus visibility. Warns the user on tab switches and automatically submits the test after **3 violations**.
-* **FullScreen Mode**: Optimized for distraction-free assessment.
+* **Secure Authentication**: Register/Login using Email & Password. Access exams via unique **Test IDs**.
+* **AI-Powered Grading**:
+* Automatically grades **Long Answer Questions** by comparing student responses against a reference answer.
+* Uses **Cosine Similarity** on text embeddings to generate a match score (0-100%).
 
 
-* **Instant Results**: Calculates scores immediately (MCQ logic + AI analysis) and displays a detailed breakdown upon submission.
-* **Prevention of Re-attempts**: Checks database to ensure a student cannot attempt the same Test ID twice.
+* **Proctoring Suite**:
+* **Tab Switch Detection**: Monitors `visibilitychange` events.
+* **Auto-Submit**: Automatically finalizes the test after **3 warnings/violations**.
+* **FullScreen Enforcement**: Encourages a distraction-free environment.
+
+
+* **Instant Feedback**:
+* Immediate scoring for MCQs.
+* Real-time AI analysis for subjective answers.
+* Detailed result breakdown (Score, Percentage, and AI Feedback).
+
+
 
 ### 👩‍🏫 Admin Dashboard
 
 * **Test Management**:
-* **Manual Creation**: Form-based builder to add questions one by one.
-* **Bulk Upload**: Import questions via **CSV** or **DOCX** files (using `papaparse` and `mammoth`).
+* **Manual Builder**: Create questions one-by-one with specific marking schemes.
+* **Bulk Import**: Upload **CSV** or **DOCX** files to create tests in seconds.
 
 
-* **Monitoring**: View a list of all active tests, their unique IDs, and status.
-* **Analytics & Reports**: View global reports and detailed student submission data stored in Firebase.
+* **Live Monitoring**: Track active tests, question counts, and status.
+* **Reporting**:
+* View global performance reports.
+* Access detailed submission logs for every student.
+
+
 
 ## 🛠️ Tech Stack
 
-* **Framework**: [React](https://react.dev/) (Vite)
-* **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-* **Backend / Database**: [Firebase](https://firebase.google.com/) (Firestore & Auth)
+**Frontend & Logic**
+
+* **Framework**: [React 19](https://react.dev/) (Vite)
+* **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 * **Icons**: [Lucide React](https://lucide.dev/)
-* **File Handling**:
-* `papaparse` (CSV Parsing)
-* `mammoth` (DOCX Parsing)
+* **Routing**: React Router DOM 7
 
+**Backend & Data**
 
-* **AI Integration**: Connects to an external Python/Node backend for LLM-based answer grading.
+* **Database**: [Firebase Firestore](https://firebase.google.com/)
+* **Auth**: Firebase Authentication
+* **File Parsing**: `papaparse` (CSV), `mammoth` (DOCX)
+
+**AI Grading Service**
+
+* **Runtime**: Node.js / Express
+* **ML Library**: [@xenova/transformers](https://huggingface.co/docs/transformers.js/index) (Transformers.js)
+* **Model**: `Xenova/all-MiniLM-L6-v2` (Feature Extraction)
 
 ## 📂 Project Structure
 
-```
+```bash
 src/
-├── assets/          # Static images and assets
-├── components/      # Reusable UI components (QuestionCard, ProtectedRoute, etc.)
-├── pages/           # Main Application Pages
-│   ├── AdminPage.jsx       # Main Admin Dashboard
-│   ├── AdminLogin.jsx      # Admin Authentication
-│   ├── AdminQuestionForm.jsx # Manual Test Creation
-│   ├── AdminCSVUpload.jsx    # Bulk Upload via CSV
-│   ├── TestPage.jsx        # Main Student Testing Interface
+├── assets/             # Static assets (images, SVGs)
+├── components/         # Shared UI components (QuestionCard, ProtectedRoute)
+├── pages/              # Page views
+│   ├── AdminPage.jsx        # Dashboard container
+│   ├── AdminQuestionForm.jsx # Manual test creator
+│   ├── AdminCSVUpload.jsx   # Bulk upload handler
+│   ├── TestPage.jsx         # Main exam interface (Student)
+│   ├── AdminLogin.jsx       # Admin auth
 │   └── ...
-├── services/        # API and Firebase interaction logic
-│   ├── authService.js      # Login/Register wrappers
-│   └── firebaseService.js  # Firestore CRUD operations
-├── utils/           # Helper functions (CSV parsing, Report generation)
-├── App.jsx          # Routing (React Router)
-├── firebase.js      # Firebase Configuration
-└── main.jsx         # Entry point
+├── services/           # Business logic
+│   ├── authService.js       # Firebase Auth wrappers
+│   ├── firebaseService.js   # Firestore CRUD operations
+│   └── ...
+├── utils/              # Helpers (CSV parsing, Report generation)
+├── server.js           # AI Grading Server (Node.js/Express)
+├── App.jsx             # Route definitions
+├── firebase.js         # Firebase config
+└── main.jsx            # Entry point
 
 ```
 
 ## ⚙️ Setup & Installation
+
+### 1. Client Setup (Frontend)
 
 1. **Clone the repository**
 ```bash
@@ -81,11 +107,7 @@ npm install
 
 
 3. **Configure Firebase**
-* Create a project at [Firebase Console](https://console.firebase.google.com/).
-* Enable **Authentication** (Email/Password) and **Firestore Database**.
-* Create a `.env` file in the root directory (or update `src/firebase.js` directly if testing locally) with your credentials:
-
-
+Create a `.env` file in the root directory:
 ```env
 VITE_FIREBASE_API_KEY=your_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -97,7 +119,7 @@ VITE_FIREBASE_APP_ID=your_app_id
 ```
 
 
-4. **Run the application**
+4. **Run the Frontend**
 ```bash
 npm run dev
 
@@ -105,47 +127,102 @@ npm run dev
 
 
 
-## 📊 Database Schema (Firestore)
+### 2. Grading Server Setup (Optional / Local)
 
-The application relies on two main collections:
+The project includes a standalone AI grading server in `src/server.js`. By default, the frontend interacts with a hosted version (`https://qna-backend-002j.onrender.com`), but you can run it locally.
 
-1. **`tests`** (Created by Admin)
-* `id` (Document ID): Unique Test ID (e.g., "react-101")
-* `title`: Test Name
-* `questions`: Array of objects `{ type, questionText, options, correctAnswer, referenceAnswer }`
-* `status`: "active" | "closed"
+1. **Install Server Dependencies**
+You may need to install the server-specific packages:
+```bash
+npm install express cors @xenova/transformers
 
-
-2. **`submissions`** (Created by Student)
-* `testId`: Reference to the Test ID
-* `userId`: Student's Auth ID
-* `responses`: Map of Question Number -> User Answer
-* `calculatedScore`: `{ correct: number, total: number }`
-* `detailedAnalysis`: AI feedback per question
+```
 
 
+2. **Run the Server**
+```bash
+node src/server.js
 
-## 🤖 AI Grading Integration
+```
 
-The `TestPage.jsx` component is configured to send long-answer responses to an external backend for grading.
 
-* **Current Endpoint**: `https://qna-backend-002j.onrender.com/grade`
-* **Payload**: `{ student_answer, reference_answer }`
-* **Response**: `{ marks_out_of_1, similarity }`
+*The server will start on `http://localhost:8000` and load the AI model.*
+3. **Update Frontend Config**
+If running locally, update the fetch URL in `src/pages/TestPage.jsx`:
+```javascript
+// Change this line:
+const response = await fetch("http://localhost:8000/grade", { ... });
 
-## 🛡️ Security Features
+```
 
-* **ProtectedRoute**: Ensures only authenticated admins can access the dashboard.
-* **Visibility API**: The `TestPage` listens for `visibilitychange` events. If a student switches tabs or minimizes the browser **3 times**, the test is auto-submitted.
 
-## 🤝 Contributing
 
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/NewFeature`).
-3. Commit changes (`git commit -m 'Add NewFeature'`).
-4. Push to the branch (`git push origin feature/NewFeature`).
-5. Open a Pull Request.
+## 🤖 AI Grading Logic
 
----
+The grading system uses Semantic Search techniques rather than simple keyword matching:
 
-**Note**: Ensure your Firestore security rules allow read/write access appropriate for your development or production environment.
+1. **Embedding Generation**: The system uses `all-MiniLM-L6-v2` to convert both the **Student's Answer** and the **Reference Answer** into high-dimensional vectors.
+2. **Cosine Similarity**: It calculates the angle between these two vectors.
+* `1.0` = Identical meaning
+* `0.0` = No relation
+
+
+3. **Scoring Algorithm**:
+| Similarity Score | Marks Awarded |
+| :--- | :--- |
+| ≥ 0.90 | 100% (1.0) |
+| ≥ 0.80 | 90% (0.9) |
+| ≥ 0.70 | 80% (0.8) |
+| ... | ... |
+| < 0.40 | 0% (0.0) |
+
+## 🛡️ Security & Proctoring
+
+* **Route Protection**: The `/admin` routes are protected by a `ProtectedRoute` component that checks for specific admin credentials/session.
+* **Visibility API**: The `TestPage` hooks into the browser's Page Visibility API.
+* **Trigger**: User switches tabs or minimizes window.
+* **Action**: Increments `tabSwitchCount`.
+* **Penalty**: At 3 counts, `handleSubmit()` is forced immediately.
+
+
+
+## 📊 Database Schema
+
+**`tests` Collection**
+
+```json
+{
+  "id": "react-basic-v1",
+  "title": "React JS Fundamentals",
+  "status": "active",
+  "questions": [
+    {
+      "type": "mcq",
+      "questionText": "What is a hook?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "A"
+    },
+    {
+      "type": "long",
+      "questionText": "Explain Virtual DOM.",
+      "referenceAnswer": "The Virtual DOM is a lightweight copy..."
+    }
+  ]
+}
+
+```
+
+**`submissions` Collection**
+
+```json
+{
+  "testId": "react-basic-v1",
+  "userId": "auth_uid_123",
+  "detailedAnalysis": {
+    "1": { "score": 1, "feedback": "Correct" },
+    "2": { "score": 0.8, "feedback": "AI Similarity: 0.75" }
+  },
+  "calculatedScore": { "correct": 1.8, "total": 2 }
+}
+
+```
